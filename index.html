@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>Kakao Share</title>
+  <script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
+  <script>
+    Kakao.init("ff9ae14e50059eda1305ea6dc9c4e3cf");
+
+    function isDetailMode() {
+      const qs = new URLSearchParams(window.location.search);
+      return qs.get("detail") === "1";
+    }
+
+    function getVoucherId() {
+      const qs = new URLSearchParams(window.location.search);
+      const msg = qs.get("msg") || "";
+      const match = msg.match(/요청번호:\s*([^\n]+)/);
+      return match ? match[1].trim() : null;
+    }
+
+    function sendMsg() {
+      const qs = new URLSearchParams(window.location.search);
+      const msg = qs.get("msg") || "";
+
+      const url = new URL(window.location.href);
+      url.search = "";
+      url.searchParams.set("detail", "1");
+      url.searchParams.set("msg", msg);
+
+      Kakao.Share.sendDefault({
+        objectType: "text",
+        text: msg,
+        link: {
+          mobileWebUrl: url.toString(),
+          webUrl: url.toString()
+        }
+      });
+    }
+
+    function handleLoad() {
+      if (isDetailMode()) {
+        const voucherId = getVoucherId();
+        if (!voucherId) {
+          document.body.innerText = "전표 ID를 찾을 수 없습니다.";
+          return;
+        }
+        location.replace(
+          "/.netlify/functions/voucher?id=" +
+          encodeURIComponent(voucherId)
+        );
+      } else {
+        sendMsg();
+      }
+    }
+  </script>
+</head>
+<body onload="handleLoad()"></body>
+</html>
